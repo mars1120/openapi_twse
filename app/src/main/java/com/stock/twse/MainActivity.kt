@@ -12,7 +12,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import com.stock.twse.homepage.HomepageViewModel
+import com.stock.twse.ui.overview.OverviewScreen
 import com.stock.twse.ui.theme.TWSETheme
 
 class MainActivity : ComponentActivity() {
@@ -22,14 +24,19 @@ class MainActivity : ComponentActivity() {
         homepageViewModel.fetchData()
         enableEdgeToEdge()
         setContent {
-            TWSETheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android",
-                        modifier = Modifier.padding(innerPadding)
-                    )
-                }
-            }
+            OverviewScreen(
+                stockCode = "2330",
+                stockName = "台積電",
+                modifier = Modifier.padding(8.dp)
+            )
+//            TWSETheme {
+//                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
+//                    Greeting(
+//                        name = "Android",
+//                        modifier = Modifier.padding(innerPadding)
+//                    )
+//                }
+//            }
         }
     }
 }
