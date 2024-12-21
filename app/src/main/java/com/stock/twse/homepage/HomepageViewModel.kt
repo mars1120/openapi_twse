@@ -1,11 +1,10 @@
 package com.stock.twse.homepage
 
+import StockDayAvgAll
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.google.gson.Gson
-import com.google.gson.reflect.TypeToken
+import com.stock.twse.StockDayAll
 import com.stock.twse.data.BwibbuAll
-import com.stock.twse.data.BwibbuInfo
 import com.stock.twse.network.ITravelRepository
 import com.stock.twse.network.TwseRepositoryImpl
 import kotlinx.coroutines.Job
@@ -13,12 +12,16 @@ import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.cancellable
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.zip
 
 import kotlinx.coroutines.launch
 
 data class HomepageUiState(
     val isLoading: Boolean = true,
+    val stockDayAll: StockDayAll? = null,
+    val stockDayAvgAll: StockDayAvgAll? = null,
     val bwibbuAll: BwibbuAll? = null,
     val error: String? = null,
 )
@@ -33,7 +36,7 @@ class HomepageViewModel(
         fetchJob?.cancelChildren()
 
         fetchJob = viewModelScope.launch {
-            repository.getBwibbuAll().collect({ result ->
+            repository.getBwibbuAll().cancellable().collect({ result ->
 
                 _uiState.update { currentState ->
                     currentState.copy(
@@ -45,8 +48,27 @@ class HomepageViewModel(
                         }
                     )
                 }
-
             })
+
+            repository.getStockDayAll()
+                .zip(repository.getStockDayAvgAll()) { stockDayAllResult, stockDayAvgAllResult ->
+                    stockDayAllResult to stockDayAvgAllResult
+                }.cancellable().collect({ (stockDayAllResult, stockDayAvgAllResult) ->
+
+                    _uiState.update { currentState ->
+                        currentState.copy(
+                            isLoading = false,
+                            stockDayAll = stockDayAllResult.getOrNull(),
+                            stockDayAvgAll = stockDayAvgAllResult.getOrNull(),
+                            error = when {
+                                stockDayAllResult.isFailure -> stockDayAllResult.exceptionOrNull()?.message
+                                stockDayAvgAllResult.isFailure -> stockDayAvgAllResult.exceptionOrNull()?.message
+                                else -> null
+                            }
+                        )
+                    }
+
+                })
         }
 
     }

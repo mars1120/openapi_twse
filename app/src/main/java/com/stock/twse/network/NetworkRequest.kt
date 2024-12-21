@@ -16,6 +16,10 @@ object NetworkRequest {
     private val service = ServiceCreator.create(ApiService::class.java)
 
     suspend fun getBwibbuAll() = service.getBwibbuAll().await()
+
+    suspend fun getStockDayAvgAll() = service.getStockDayAvgAll().await()
+
+    suspend fun getStockDayAll() = service.getStockDayAll().await()
     private suspend fun <T> Call<T>.await(): T = suspendCancellableCoroutine { continuation ->
         continuation.invokeOnCancellation {
             cancel()

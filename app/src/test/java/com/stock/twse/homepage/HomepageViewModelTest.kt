@@ -1,18 +1,17 @@
 package com.stock.twse.homepage
 
+import StockDayAvgAllItem
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
+import com.stock.twse.StockDayAllItem
 import com.stock.twse.data.BwibbuAll
 import com.stock.twse.data.BwibbuInfo
 import com.stock.twse.network.ITravelRepository
 import com.stock.twse.network.TwseRepositoryImpl
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
@@ -54,15 +53,35 @@ class HomepageViewModelTest {
     fun verifyTwseApiResult() = runTest {
 
         // Prepare mock data
-        val BwibbuAllResultData = getStringFromFiles("BwibbuAllResultData.txt")
-        val type = object : TypeToken<List<BwibbuInfo>>() {}.type
-        val mockBwibbuAll = gson.fromJson<List<BwibbuInfo>>(BwibbuAllResultData, type)
+        val mockBwibbuAll = gson.fromJson<List<BwibbuInfo>>(
+            getStringFromFiles("StockDayAllResultData.txt"),
+            object : TypeToken<List<BwibbuInfo>>() {}.type
+        )
+
+        val mockStockDayAll = gson.fromJson<List<StockDayAllItem>>(
+            getStringFromFiles("StockDayAllResultData.txt"),
+            object : TypeToken<List<StockDayAllItem>>() {}.type
+        )
+
+        val mockStockDayAvgAll = gson.fromJson<List<StockDayAvgAllItem>>(
+            getStringFromFiles("StockDayAvgAllResultData.txt"),
+            object : TypeToken<List<StockDayAvgAllItem>>() {}.type
+        )
 
 
         // Mock repository behavior
         whenever(twseRepository.getBwibbuAll()).thenReturn(
             flowOf(Result.success(mockBwibbuAll))
         )
+
+        whenever(twseRepository.getStockDayAll()).thenReturn(
+            flowOf(Result.success(mockStockDayAll))
+        )
+
+        whenever(twseRepository.getStockDayAvgAll()).thenReturn(
+            flowOf(Result.success(mockStockDayAvgAll))
+        )
+
 
         // Call the method under test
         viewModel.fetchData()
@@ -79,6 +98,8 @@ class HomepageViewModelTest {
         val actualBwibbuAllJson = gson.toJson(uiState.bwibbuAll)
         val expectedBwibbuAllJson = gson.toJson(mockBwibbuAll)
         assertEquals(actualBwibbuAllJson, expectedBwibbuAllJson)
+        assertEquals(gson.toJson(uiState.stockDayAll), gson.toJson(mockStockDayAll))
+        assertEquals(gson.toJson(uiState.stockDayAvgAll), gson.toJson(mockStockDayAvgAll))
     }
 
     @Ignore("Skip real API test")
@@ -92,6 +113,8 @@ class HomepageViewModelTest {
 
         Thread.sleep(5000)
         testDispatcher.scheduler.advanceUntilIdle()
+        Thread.sleep(5000)
+        testDispatcher.scheduler.advanceUntilIdle()
         val uiState = viewModel.uiState.value
 
         assertFalse(uiState.isLoading)
@@ -99,11 +122,11 @@ class HomepageViewModelTest {
 
         assertNotNull(uiState.bwibbuAll)
         assertTrue(uiState.bwibbuAll!!.isNotEmpty())
-
+        assertTrue(uiState.stockDayAll!!.isNotEmpty())
+        assertTrue(uiState.stockDayAvgAll!!.isNotEmpty())
         uiState.bwibbuAll?.firstOrNull()?.let { firstItem ->
             assertNotNull(firstItem.Code)
             assertNotNull(firstItem.Name)
-
         }
     }
 
