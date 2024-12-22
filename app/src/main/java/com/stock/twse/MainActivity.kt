@@ -1,5 +1,6 @@
 package com.stock.twse
 
+import StockDayAvgAll
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -24,12 +25,15 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.stock.twse.data.BwibbuAll
 import com.stock.twse.homepage.HomepageViewModel
 import com.stock.twse.ui.overview.OverviewScreen
 import com.stock.twse.ui.theme.TWSETheme
@@ -42,21 +46,39 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             TWSETheme {
-                AppScaffold()
+                initData(homepageViewModel)
             }
         }
-
     }
+}
+
+@Composable
+private fun initData(viewModel: HomepageViewModel) {
+    val uiState by viewModel.uiState.collectAsState()
+    val dataStockDayAll = remember(uiState.stockDayAll) {
+        uiState.stockDayAll ?: emptyList()
+    }
+    val dataStockDayAvgAll = remember(uiState.stockDayAvgAll) {
+        uiState.stockDayAvgAll ?: emptyList()
+    }
+    val dataBwibbuAll = remember(uiState.bwibbuAll) {
+        uiState.bwibbuAll ?: emptyList()
+    }
+    AppScaffold(dataStockDayAll, dataStockDayAvgAll, dataBwibbuAll)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AppScaffold() {
+fun AppScaffold(
+    dataStockDayAll: StockDayAll = emptyList(),
+    dataStockDayAvgAll: StockDayAvgAll = emptyList(),
+    dataBwibbuAll: BwibbuAll = emptyList()
+) {
 
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
 
     Scaffold(
-        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+//        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
 
         topBar = {
             CenterAlignedTopAppBar(
@@ -100,13 +122,12 @@ fun AppScaffold() {
     ) {
         Surface(modifier = Modifier.padding(it)) {
             OverviewScreen(
-                stockCode = "2330",
-                stockName = "台積電",
+                dataStockDayAll,
+                dataStockDayAvgAll,
                 modifier = Modifier.padding(8.dp)
             )
         }
-
-
+        
     }
 }
 

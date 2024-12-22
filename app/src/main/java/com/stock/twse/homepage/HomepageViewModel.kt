@@ -7,6 +7,7 @@ import com.stock.twse.StockDayAll
 import com.stock.twse.data.BwibbuAll
 import com.stock.twse.network.ITravelRepository
 import com.stock.twse.network.TwseRepositoryImpl
+import com.stock.twse.utils.ArrayUtils
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -32,7 +33,7 @@ class HomepageViewModel(
     private val _uiState = MutableStateFlow(HomepageUiState())
     val uiState: StateFlow<HomepageUiState> = _uiState.asStateFlow()
     private var fetchJob: Job? = null
-    fun fetchData() {
+    fun fetchData(skipFilter: Boolean = false) {
         fetchJob?.cancelChildren()
 
         fetchJob = viewModelScope.launch {
@@ -59,7 +60,10 @@ class HomepageViewModel(
                         currentState.copy(
                             isLoading = false,
                             stockDayAll = stockDayAllResult.getOrNull(),
-                            stockDayAvgAll = stockDayAvgAllResult.getOrNull(),
+                            stockDayAvgAll = (if (skipFilter) stockDayAvgAllResult.getOrNull() else ArrayUtils.mergeSortedArrays(
+                                stockDayAllResult.getOrNull(),
+                                stockDayAvgAllResult.getOrNull()
+                            )),
                             error = when {
                                 stockDayAllResult.isFailure -> stockDayAllResult.exceptionOrNull()?.message
                                 stockDayAvgAllResult.isFailure -> stockDayAvgAllResult.exceptionOrNull()?.message

@@ -1,14 +1,16 @@
 package com.stock.twse.homepage
 
+import StockDayAvgAll
 import StockDayAvgAllItem
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
+import com.stock.twse.StockDayAll
 import com.stock.twse.StockDayAllItem
-import com.stock.twse.data.BwibbuAll
 import com.stock.twse.data.BwibbuInfo
 import com.stock.twse.network.ITravelRepository
 import com.stock.twse.network.TwseRepositoryImpl
+import com.stock.twse.utils.ArrayUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flowOf
@@ -84,7 +86,7 @@ class HomepageViewModelTest {
 
 
         // Call the method under test
-        viewModel.fetchData()
+        viewModel.fetchData(true)
 
         // Advance the dispatcher to run all coroutines
         testDispatcher.scheduler.advanceUntilIdle()
@@ -108,7 +110,7 @@ class HomepageViewModelTest {
         var realTwseRepository = TwseRepositoryImpl()
         viewModel = HomepageViewModel(realTwseRepository)
 
-        viewModel.fetchData()
+        viewModel.fetchData(true)
         testDispatcher.scheduler.advanceUntilIdle()
 
         Thread.sleep(5000)
@@ -129,6 +131,60 @@ class HomepageViewModelTest {
             assertNotNull(firstItem.Name)
         }
     }
+
+
+    @Test
+    fun verifyMergeSortedArraysByHashMapFilter() {
+        // Prepare mock data
+        val mockStockDayAll = gson.fromJson<StockDayAll>(
+            getStringFromFiles("StockDayAllResultData.txt"),
+            object : TypeToken<StockDayAll>() {}.type
+        )
+
+        val mockStockDayAvgAll = gson.fromJson<StockDayAvgAll>(
+            getStringFromFiles("StockDayAvgAllResultData.txt"),
+            object : TypeToken<StockDayAvgAll>() {}.type
+        )
+
+        val mockStockDayAllSet = mockStockDayAll.map { it.Code }.toHashSet()
+
+        val mergeStockDayAvgAll = mockStockDayAvgAll.filter { mockStockDayAllSet.contains(it.Code) }
+            .map { it }
+
+        val mergeStockDayAvgAllSet = mergeStockDayAvgAll.map { it.Code }.toHashSet()
+
+        val missingCodes = mockStockDayAll!!.filter { !mergeStockDayAvgAllSet.contains(it.Code) }
+            .map { it.Code }
+
+        assertEquals(missingCodes[0], "00707R")
+    }
+
+    @Test
+    fun verifyMergeSortedArrays() {
+        // Prepare mock data
+        val mockStockDayAll = gson.fromJson<StockDayAll>(
+            getStringFromFiles("StockDayAllResultData.txt"),
+            object : TypeToken<StockDayAll>() {}.type
+        )
+
+        val mockStockDayAvgAll = gson.fromJson<StockDayAvgAll>(
+            getStringFromFiles("StockDayAvgAllResultData.txt"),
+            object : TypeToken<StockDayAvgAll>() {}.type
+        )
+
+        var mergeStockDayAll = ArrayUtils.mergeSortedArrays(
+            mockStockDayAll,
+            mockStockDayAvgAll
+        )
+
+        val mergeStockDayAllSet = mergeStockDayAll!!.map { it.Code }.toHashSet()
+        val missingCodes = mockStockDayAll!!.filter { !mergeStockDayAllSet.contains(it.Code) }
+            .map { it.Code }
+
+        assertEquals(missingCodes[0], "00707R")
+
+    }
+
 
     private fun getStringFromFiles(fileName: String): String {
         val currentPath: Path = FileSystems.getDefault().getPath("").toAbsolutePath()
