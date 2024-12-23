@@ -40,15 +40,16 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
 import com.stock.twse.data.BwibbuAll
 import com.stock.twse.homepage.HomepageViewModel
+import com.stock.twse.ui.components.ClickableText
+import com.stock.twse.ui.components.MinimalDialog
+import com.stock.twse.ui.overview.AppScaffold
 import com.stock.twse.ui.overview.OverviewScreen
 import com.stock.twse.ui.theme.TWSETheme
 
@@ -87,166 +88,6 @@ private fun initData(viewModel: HomepageViewModel) {
         { viewModel.setClickedCode(it) }, { viewModel.setSortByAsc(it) })
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun AppScaffold(
-    dataStockDayAll: StockDayAll = emptyList(),
-    dataStockDayAvgAll: StockDayAvgAll = emptyList(),
-    dataBwibbuAll: BwibbuAll = emptyList(),
-    dataSelectedCardCode: String? = null,
-    onClickCard: (String) -> Unit = {},
-    onClickBottom: (Boolean) -> Unit = {}
-) {
-    var shouldShowDialog by remember { mutableStateOf(false) }
-    val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
-    var showBottomSheet by remember { mutableStateOf(false) }
-    Scaffold(
-        topBar = {
-            CenterAlignedTopAppBar(
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimary,
-                    actionIconContentColor = MaterialTheme.colorScheme.onPrimary
-                ),
-                title = {
-                    Text(
-                        text = stringResource(id = R.string.app_name),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                },
-
-                actions = {
-                    Row(modifier = Modifier.padding(end = 10.dp)) {
-                        CompositionLocalProvider(
-                            LocalRippleConfiguration provides null
-                        ) {
-                            IconButton(
-                                onClick = {
-                                    showBottomSheet = true
-                                },
-                                modifier = Modifier
-                                    .border(
-                                        width = 0.5.dp,
-                                        color = MaterialTheme.colorScheme.onPrimary,
-                                        shape = RoundedCornerShape(5.dp),
-                                    )
-                                    .width(32.dp)
-                                    .height(32.dp)
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Filled.Menu,
-                                    contentDescription = null
-                                )
-                            }
-                        }
-                    }
-                },
-                scrollBehavior = scrollBehavior,
-            )
-        },
-    ) {
-        Surface(modifier = Modifier.padding(it)) {
-            OverviewScreen(
-                dataStockDayAll,
-                dataStockDayAvgAll,
-                {
-                    onClickCard.invoke(it)
-                    shouldShowDialog = true
-                },
-                modifier = Modifier.padding(8.dp)
-            )
-            if (showBottomSheet) {
-                ModalBottomSheet(
-                    onDismissRequest = {
-                        showBottomSheet = false
-                    },
-                    sheetState = rememberModalBottomSheetState()
-                ) {
-                    Column(
-                        modifier = Modifier.fillMaxWidth()
-
-                    ) {
-                        ClickableText(text = "依股票代號降序", {
-                            onClickBottom(true)
-                            showBottomSheet = false
-                        })
-                        ClickableText(text = "依股票代號升序", {
-                            onClickBottom(false)
-                            showBottomSheet = false
-                        })
-                    }
-                }
-            }
-
-            if (shouldShowDialog && dataSelectedCardCode != null && dataBwibbuAll.isNotEmpty()) {
-                val dataBwibbuAllMap = dataBwibbuAll.associateBy { it.Code }
-                MinimalDialog(
-                    { shouldShowDialog = false },
-                    dataBwibbuAllMap.get(dataSelectedCardCode)?.PEratio.toString(),
-                    dataBwibbuAllMap.get(dataSelectedCardCode)?.DividendYield.toString(),
-                    dataBwibbuAllMap.get(dataSelectedCardCode)?.PBratio.toString()
-                )
-            }
-        }
-    }
-}
-
-@Composable
-fun ClickableText(text: String, onClick: () -> Unit) {
-    Box(modifier = Modifier
-        .clickable() {
-            onClick()
-        }
-        .fillMaxWidth()
-    ) {
-        Text(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(10.dp),
-            text = text
-        )
-    }
-}
-
-@Composable
-fun MinimalDialog(
-    onDismissRequest: () -> Unit,
-    PEratio: String = "",
-    DividendYield: String = "",
-    MonthlyAveragePrice: String = ""
-) {
-
-    Dialog(onDismissRequest = { onDismissRequest() }) {
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            shape = RoundedCornerShape(16.dp),
-        ) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp)
-            ) {
-
-                Text(
-                    text = "本益比:${PEratio}",
-                    modifier = Modifier.padding(16.dp)
-                )
-                Text(
-                    text = "殖利率:${DividendYield}%",
-                    modifier = Modifier.padding(16.dp)
-                )
-                Text(
-                    text = "股價淨值比:${MonthlyAveragePrice}",
-                    modifier = Modifier.padding(16.dp)
-                )
-            }
-        }
-    }
-}
 
 @Preview(showBackground = true)
 @Composable
