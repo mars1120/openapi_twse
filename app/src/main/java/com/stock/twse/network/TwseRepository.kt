@@ -2,6 +2,7 @@ package com.stock.twse.network
 
 
 import StockDayAvgAll
+import com.stock.twse.App
 import com.stock.twse.StockDayAll
 import com.stock.twse.data.BwibbuAll
 import kotlinx.coroutines.Dispatchers
@@ -23,6 +24,8 @@ class TwseRepositoryImpl : ITravelRepository {
 
     override fun getStockDayAll(): Flow<Result<StockDayAll>> = flow {
         val stockDayAll = NetworkRequest.getStockDayAll()
+        App.db.stockDayAllItemDao().deleteAll()
+        App.db.stockDayAllItemDao().insertAll(stockDayAll)
         emit(Result.success(stockDayAll))
     }.flowOn(Dispatchers.IO)
         .catch { e ->

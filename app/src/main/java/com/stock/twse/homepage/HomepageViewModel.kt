@@ -5,6 +5,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.stock.twse.App
 import com.stock.twse.StockDayAll
 import com.stock.twse.data.BwibbuAll
 import com.stock.twse.network.ITravelRepository
@@ -63,7 +64,7 @@ class HomepageViewModel(
                 .zip(repository.getStockDayAvgAll()) { stockDayAllResult, stockDayAvgAllResult ->
                     stockDayAllResult to stockDayAvgAllResult
                 }.cancellable().collect({ (stockDayAllResult, stockDayAvgAllResult) ->
-
+                    App.db.stockDayAllItemDao().getAll()
                     _uiState.update { currentState ->
                         var mStockDayAllResult = stockDayAllResult.getOrNull()
                         var mStockDayAvgAllResult = stockDayAvgAllResult.getOrNull()
@@ -106,5 +107,8 @@ class HomepageViewModel(
 
     fun setClickedCode(item: String) {
         _uiState.update { it.copy(selectedCardCode = item) }
+    }
+    fun setClickedCode1(item: StockDayAll) {
+        _uiState.update { it.copy(stockDayAll = item) }
     }
 }

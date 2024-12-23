@@ -45,6 +45,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.lifecycleScope
 import com.stock.twse.data.BwibbuAll
 import com.stock.twse.homepage.HomepageViewModel
 import com.stock.twse.ui.components.ClickableText
@@ -52,13 +53,18 @@ import com.stock.twse.ui.components.MinimalDialog
 import com.stock.twse.ui.overview.AppScaffold
 import com.stock.twse.ui.overview.OverviewScreen
 import com.stock.twse.ui.theme.TWSETheme
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     private val homepageViewModel: HomepageViewModel by viewModels()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         homepageViewModel.fetchData()
-        enableEdgeToEdge()
+//        lifecycleScope.launch {
+//            homepageViewModel.setClickedCode1(App.db.stockDayAllItemDao().getAll())
+//
+//        }
+         enableEdgeToEdge()
         setContent {
             TWSETheme {
                 initData(homepageViewModel)
