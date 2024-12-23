@@ -28,6 +28,7 @@ import com.stock.twse.StockDayAllItem
 fun StockInfoCard(
     dataA: StockDayAllItem,
     dataB: StockDayAvgAllItem,
+    onClickStockDayAll: (String) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     ElevatedCard(
@@ -39,7 +40,9 @@ fun StockInfoCard(
             contentColor = Color.White  //Card content color,e.g.text
         ),
         modifier = modifier
-            .fillMaxWidth(), onClick = {}
+            .fillMaxWidth(), onClick = {
+            onClickStockDayAll(dataB.Code)
+        }
 //            .size(width = 240.dp, height = 100.dp)
     ) {
         Column(

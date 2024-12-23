@@ -27,15 +27,19 @@ data class HomepageUiState(
     val stockDayAvgAll: StockDayAvgAll? = null,
     val bwibbuAll: BwibbuAll? = null,
     val error: String? = null,
+    val selectedCardCode: String? = null
 )
 
 class HomepageViewModel(
     private val repository: ITravelRepository = TwseRepositoryImpl()
 ) : ViewModel() {
+
     private val _uiState = MutableStateFlow(HomepageUiState())
     val uiState: StateFlow<HomepageUiState> = _uiState.asStateFlow()
+
     private val _sortByAsc = MutableLiveData<Boolean>(true)
     val sortByAsc: LiveData<Boolean> = _sortByAsc
+
     private var fetchJob: Job? = null
     fun fetchData(skipFilter: Boolean = false) {
         fetchJob?.cancelChildren()
@@ -98,5 +102,9 @@ class HomepageViewModel(
             )
 
         }
+    }
+
+    fun setClickedCode(item: String) {
+        _uiState.update { it.copy(selectedCardCode = item) }
     }
 }

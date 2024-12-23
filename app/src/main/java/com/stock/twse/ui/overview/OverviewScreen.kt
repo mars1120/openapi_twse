@@ -20,7 +20,7 @@ import com.stock.twse.ui.theme.TWSETheme
 fun OverviewScreen(
     dataA: StockDayAll? = null,
     dataB: StockDayAvgAll? = null,
-    onClickStockDayAll: (Int) -> Unit = {},
+    onClickStockDayAll: (String) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     LazyColumn(
@@ -31,7 +31,12 @@ fun OverviewScreen(
         if (dataA != null && dataB != null) {
             val dataASet = dataA.associateBy { it.Code }
             items(dataB.size) { index ->
-                StockInfoCard(dataASet.get(dataB[index].Code)!!, dataB[index], modifier)
+                StockInfoCard(
+                    dataASet.get(dataB[index].Code)!!,
+                    dataB[index],
+                    onClickStockDayAll,
+                    modifier
+                )
             }
         }
     }

@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material3.Card
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -29,7 +30,6 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.rememberTopAppBarState
@@ -40,11 +40,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
 import com.stock.twse.data.BwibbuAll
 import com.stock.twse.homepage.HomepageViewModel
 import com.stock.twse.ui.overview.OverviewScreen
@@ -76,8 +78,13 @@ private fun initData(viewModel: HomepageViewModel) {
     val dataBwibbuAll = remember(uiState.bwibbuAll) {
         uiState.bwibbuAll ?: emptyList()
     }
-    AppScaffold(dataStockDayAll, dataStockDayAvgAll, dataBwibbuAll,
-        { viewModel.setSortByAsc(it) })
+
+    val selectedCardCode = remember(uiState.selectedCardCode) {
+        uiState.selectedCardCode
+    }
+
+    AppScaffold(dataStockDayAll, dataStockDayAvgAll, dataBwibbuAll, selectedCardCode,
+        { viewModel.setClickedCode(it) }, { viewModel.setSortByAsc(it) })
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -86,13 +93,13 @@ fun AppScaffold(
     dataStockDayAll: StockDayAll = emptyList(),
     dataStockDayAvgAll: StockDayAvgAll = emptyList(),
     dataBwibbuAll: BwibbuAll = emptyList(),
+    dataSelectedCardCode: String? = null,
+    onClickCard: (String) -> Unit = {},
     onClickBottom: (Boolean) -> Unit = {}
 ) {
-
+    var shouldShowDialog by remember { mutableStateOf(false) }
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
-    var showBottomSheet by remember {
-        mutableStateOf(false)
-    }
+    var showBottomSheet by remember { mutableStateOf(false) }
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
@@ -111,9 +118,6 @@ fun AppScaffold(
 
                 actions = {
                     Row(modifier = Modifier.padding(end = 10.dp)) {
-//                        Button(onClick = {
-//                            showBottomSheet=true
-//                        }) { }
                         CompositionLocalProvider(
                             LocalRippleConfiguration provides null
                         ) {
@@ -146,6 +150,10 @@ fun AppScaffold(
             OverviewScreen(
                 dataStockDayAll,
                 dataStockDayAvgAll,
+                {
+                    onClickCard.invoke(it)
+                    shouldShowDialog = true
+                },
                 modifier = Modifier.padding(8.dp)
             )
             if (showBottomSheet) {
@@ -170,6 +178,16 @@ fun AppScaffold(
                     }
                 }
             }
+
+            if (shouldShowDialog && dataSelectedCardCode != null && dataBwibbuAll.isNotEmpty()) {
+                val dataBwibbuAllMap = dataBwibbuAll.associateBy { it.Code }
+                MinimalDialog(
+                    { shouldShowDialog = false },
+                    dataBwibbuAllMap.get(dataSelectedCardCode)?.PEratio.toString(),
+                    dataBwibbuAllMap.get(dataSelectedCardCode)?.DividendYield.toString(),
+                    dataBwibbuAllMap.get(dataSelectedCardCode)?.PBratio.toString()
+                )
+            }
         }
     }
 }
@@ -188,6 +206,45 @@ fun ClickableText(text: String, onClick: () -> Unit) {
                 .padding(10.dp),
             text = text
         )
+    }
+}
+
+@Composable
+fun MinimalDialog(
+    onDismissRequest: () -> Unit,
+    PEratio: String = "",
+    DividendYield: String = "",
+    MonthlyAveragePrice: String = ""
+) {
+
+    Dialog(onDismissRequest = { onDismissRequest() }) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            shape = RoundedCornerShape(16.dp),
+        ) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+            ) {
+
+                Text(
+                    text = "本益比:${PEratio}",
+                    modifier = Modifier.padding(16.dp)
+                )
+                Text(
+                    text = "殖利率:${DividendYield}%",
+                    modifier = Modifier.padding(16.dp)
+                )
+                Text(
+                    text = "股價淨值比:${MonthlyAveragePrice}",
+                    modifier = Modifier.padding(16.dp)
+                )
+            }
+        }
     }
 }
 
