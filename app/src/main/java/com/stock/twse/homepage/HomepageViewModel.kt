@@ -1,6 +1,8 @@
 package com.stock.twse.homepage
 
 import StockDayAvgAll
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.stock.twse.StockDayAll
@@ -32,6 +34,8 @@ class HomepageViewModel(
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(HomepageUiState())
     val uiState: StateFlow<HomepageUiState> = _uiState.asStateFlow()
+    private val _sortByAsc = MutableLiveData<Boolean>(true)
+    val sortByAsc: LiveData<Boolean> = _sortByAsc
     private var fetchJob: Job? = null
     fun fetchData(skipFilter: Boolean = false) {
         fetchJob?.cancelChildren()
@@ -57,12 +61,18 @@ class HomepageViewModel(
                 }.cancellable().collect({ (stockDayAllResult, stockDayAvgAllResult) ->
 
                     _uiState.update { currentState ->
+                        var mStockDayAllResult = stockDayAllResult.getOrNull()
+                        var mStockDayAvgAllResult = stockDayAvgAllResult.getOrNull()
+                        if (sortByAsc.value == false) {
+                            mStockDayAllResult = mStockDayAllResult?.reversed()
+                            mStockDayAvgAllResult = mStockDayAvgAllResult?.reversed()
+                        }
                         currentState.copy(
                             isLoading = false,
-                            stockDayAll = stockDayAllResult.getOrNull(),
-                            stockDayAvgAll = (if (skipFilter) stockDayAvgAllResult.getOrNull() else ArrayUtils.mergeSortedArrays(
-                                stockDayAllResult.getOrNull(),
-                                stockDayAvgAllResult.getOrNull()
+                            stockDayAll = mStockDayAllResult,
+                            stockDayAvgAll = (if (skipFilter) mStockDayAvgAllResult else ArrayUtils.mergeSortedArrays(
+                                mStockDayAllResult,
+                                mStockDayAvgAllResult
                             )),
                             error = when {
                                 stockDayAllResult.isFailure -> stockDayAllResult.exceptionOrNull()?.message
@@ -75,5 +85,18 @@ class HomepageViewModel(
                 })
         }
 
+    }
+
+    fun setSortByAsc(isAsc: Boolean) {
+        if (_sortByAsc.value == isAsc)
+            return
+        _sortByAsc.value = isAsc
+        _uiState.update { currentState ->
+            currentState.copy(
+                stockDayAll = _uiState.value.stockDayAll?.reversed(),
+                stockDayAvgAll = _uiState.value.stockDayAvgAll?.reversed()
+            )
+
+        }
     }
 }

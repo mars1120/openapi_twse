@@ -6,6 +6,6 @@
         <item name="android:colorPrimaryDark">@color/blue900</item>
         <item name="android:colorAccent">@color/blue700</item>
         <item name="android:statusBarColor">@color/status_bar</item>
-        <item name="android:background">@color/status_bar</item>
+<!--        <item name="android:background">@color/status_bar</item>-->
     </style>
 </resources>
